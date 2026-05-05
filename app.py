@@ -67,8 +67,27 @@ if feature_option == "Upload CSV File":
     uploaded_file = st.file_uploader(
         "Choose a CSV file",
         type=['csv'],
+        key="csv_uploader",
         help="Upload your retail sales data in CSV format"
     )
+
+    # Upload button
+    if uploaded_file is not None:
+        if st.button("Upload File"):
+            try:
+                files = {"file": uploaded_file}
+                response = requests.post(f"{BACKEND_API}/upload", files=files)
+                if response.status_code == 200:
+                    result = response.json()
+                    st.success(f"File uploaded successfully! {result.get('rows', 0)} rows loaded.")
+                    st.session_state['data_source'] = 'CSV Upload'
+                    # Clear previous data
+                    if 'df' in st.session_state:
+                        del st.session_state['df']
+                else:
+                    st.error(f"Upload failed: {response.status_code}")
+            except Exception as e:
+                st.error(f"Error uploading file: {str(e)}")
 
     # Get Data button
     if st.button("Get Data"):
