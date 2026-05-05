@@ -5,7 +5,7 @@ import requests
 
 # Backend API URLs
 BACKEND_API = "https://hcl-final-hackathon-backend.onrender.com"
-TRANSFORM_API = "https://hcl-final-hackathon-backend-2.onrender.com"
+TRANSFORM_API = "https://hcl-final-hackathon-backend.onrender.com"
 
 # Page configuration
 st.set_page_config(
@@ -178,7 +178,7 @@ if 'df' in st.session_state:
     # Display the dataframe
     st.dataframe(
         df,
-        use_container_width=True,
+        width='stretch',
         height=400
     )
     
@@ -190,7 +190,7 @@ if 'df' in st.session_state:
         'Non-Null Count': df.count().values,
         'Null Count': df.isnull().sum().values
     })
-    st.dataframe(col_info, use_container_width=True)
+    st.dataframe(col_info, width='stretch')
     
     # Transform button
     st.markdown("---")
@@ -213,37 +213,7 @@ if st.session_state.get('show_transformation', False):
     st.markdown("---")
     st.markdown('<h2 class="center-header">Phase 2: TRANSFORMATION</h2>', unsafe_allow_html=True)
     
-    # Transformation options
-    st.subheader("Data Transformation Options")
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("Run Transformation"):
-            try:
-                response = requests.post(f"{TRANSFORM_API}/transform")
-                if response.status_code == 200:
-                    result = response.json()
-                    st.session_state['transform_result'] = result
-                    st.success("Transformation completed successfully!")
-                    st.rerun()
-                else:
-                    st.error(f"Transformation failed: {response.status_code}")
-            except Exception as e:
-                st.error(f"Error during transformation: {str(e)}")
-    
-    with col2:
-        if st.button("Get Transform Report"):
-            try:
-                response = requests.get(f"{TRANSFORM_API}/transform/report")
-                if response.status_code == 200:
-                    report = response.json()
-                    st.session_state['transform_report'] = report
-                    st.success("Report fetched successfully!")
-                else:
-                    st.error(f"Failed to fetch report: {response.status_code}")
-            except Exception as e:
-                st.error(f"Error fetching report: {str(e)}")
-    
+        
     # Display transformation result if available
     if 'transform_result' in st.session_state:
         result = st.session_state['transform_result']
@@ -271,41 +241,64 @@ if st.session_state.get('show_transformation', False):
                 for issue in report['issues_fixed']:
                     st.success(f"✓ {issue}")
             
-            if report.get('features_added'):
-                st.subheader("Features Added")
-                for feature in report['features_added']:
-                    st.info(f"+ {feature}")
-            
+                        
             if report.get('validation_warnings'):
                 st.subheader("Validation Warnings")
                 for warning in report['validation_warnings']:
                     st.warning(f"⚠ {warning}")
             
-            if report.get('final_columns'):
-                st.subheader("Final Columns")
-                st.write(", ".join(report['final_columns']))
-        
+                    
         # Display aggregation summary
         if 'aggregation_summary' in result:
             st.subheader("Aggregation Summary")
-            agg_summary = result['aggregation_summary']
             
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                if agg_summary.get('total_revenue'):
-                    st.metric("Total Revenue", f"${agg_summary['total_revenue']:,.2f}")
-                if agg_summary.get('total_orders'):
-                    st.metric("Total Orders", f"{agg_summary['total_orders']:,}")
-            with col2:
-                if agg_summary.get('avg_order_value'):
-                    st.metric("Avg Order Value", f"${agg_summary['avg_order_value']:,.2f}")
-                if agg_summary.get('total_units_sold'):
-                    st.metric("Total Units Sold", f"{agg_summary['total_units_sold']:,}")
-            with col3:
-                if agg_summary.get('unique_stores'):
-                    st.metric("Unique Stores", agg_summary['unique_stores'])
-                if agg_summary.get('unique_categories'):
-                    st.metric("Unique Categories", agg_summary['unique_categories'])
+            # Total Sales by Store
+            try:
+                response = requests.get(f"{TRANSFORM_API}/aggregations/by-store")
+                if response.status_code == 200:
+                    store_data = response.json()
+                    if store_data:
+                        st.subheader("Total Sales by Store")
+                        store_df = pd.DataFrame(store_data)
+                        st.dataframe(store_df, width='stretch')
+            except Exception as e:
+                st.error(f"Error fetching store data: {str(e)}")
+            
+            # Total Sales by Category
+            try:
+                response = requests.get(f"{TRANSFORM_API}/aggregations/by-category")
+                if response.status_code == 200:
+                    category_data = response.json()
+                    if category_data:
+                        st.subheader("Total Sales by Category")
+                        category_df = pd.DataFrame(category_data)
+                        st.dataframe(category_df, width='stretch')
+            except Exception as e:
+                st.error(f"Error fetching category data: {str(e)}")
+            
+            # Total Sales by Month
+            try:
+                response = requests.get(f"{TRANSFORM_API}/aggregations/by-month")
+                if response.status_code == 200:
+                    month_data = response.json()
+                    if month_data:
+                        st.subheader("Total Sales by Month")
+                        month_df = pd.DataFrame(month_data)
+                        st.dataframe(month_df, width='stretch')
+            except Exception as e:
+                st.error(f"Error fetching month data: {str(e)}")
+            
+            # Total Sales by Date
+            try:
+                response = requests.get(f"{TRANSFORM_API}/aggregations/by-date")
+                if response.status_code == 200:
+                    date_data = response.json()
+                    if date_data:
+                        st.subheader("Total Sales by Date")
+                        date_df = pd.DataFrame(date_data)
+                        st.dataframe(date_df, width='stretch')
+            except Exception as e:
+                st.error(f"Error fetching date data: {str(e)}")
         
         # View transformed data option
         st.markdown("---")
@@ -329,4 +322,4 @@ if st.session_state.get('show_transformation', False):
     if 'transformed_df' in st.session_state:
         st.subheader("Transformed Data Preview")
         df = st.session_state['transformed_df']
-        st.dataframe(df, use_container_width=True, height=400)
+        st.dataframe(df, width='stretch', height=400)
