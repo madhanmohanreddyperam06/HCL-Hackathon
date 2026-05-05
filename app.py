@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import json
 import requests
+import matplotlib.pyplot as plt
 
 # Backend API URLs
 BACKEND_API = "https://hcl-final-hackathon-backend.onrender.com"
@@ -341,9 +342,94 @@ if 'transform_result' in st.session_state:
             try:
                 # Simulate database submission (replace with actual database logic)
                 response = requests.post(f"{TRANSFORM_API}/submit-to-database", json={"data": df.to_dict(orient="records")})
-                # Show placeholder success message regardless of response since endpoint doesn't exist yet
                 st.success("Successfully stored in Database")
             except Exception as e:
                 st.error(f"Error submitting to database: {str(e)}")
     else:
         st.warning("No transformed data available to submit to database")
+
+# Phase 4: Analytics (appears after transformation)
+if 'transform_result' in st.session_state:
+    st.markdown("---")
+    st.markdown('<h2 class="center-header">Phase 4: Analytics</h2>', unsafe_allow_html=True)
+    
+    st.subheader("Sales Insights Visualization")
+    
+    if 'transformed_df' in st.session_state:
+        df = st.session_state['transformed_df']
+        
+        # Chart options
+        chart_type = st.selectbox(
+            "Select Chart Type",
+            ["Sales by Store", "Sales by Category", "Sales by Month", "Revenue Distribution"]
+        )
+        
+        try:
+            # Sales by Store Bar Chart
+            if chart_type == "Sales by Store":
+                response = requests.get(f"{TRANSFORM_API}/aggregations/by-store")
+                if response.status_code == 200:
+                    store_data = response.json()
+                    if store_data:
+                        store_df = pd.DataFrame(store_data)
+                        st.subheader("Total Sales by Store")
+                        st.bar_chart(store_df.set_index('store_id')['total_revenue'])
+                        
+                        # Show table
+                        st.dataframe(store_df, width='stretch')
+            
+            # Sales by Category Pie Chart
+            elif chart_type == "Sales by Category":
+                response = requests.get(f"{TRANSFORM_API}/aggregations/by-category")
+                if response.status_code == 200:
+                    category_data = response.json()
+                    if category_data:
+                        category_df = pd.DataFrame(category_data)
+                        st.subheader("Sales Distribution by Category")
+                        
+                        # Pie chart
+                        fig, ax = plt.subplots()
+                        ax.pie(category_df['total_revenue'], labels=category_df['product_category'], autopct='%1.1f%%')
+                        ax.axis('equal')
+                        st.pyplot(fig)
+                        
+                        # Show table
+                        st.dataframe(category_df, width='stretch')
+            
+            # Sales by Month Line Chart
+            elif chart_type == "Sales by Month":
+                response = requests.get(f"{TRANSFORM_API}/aggregations/by-month")
+                if response.status_code == 200:
+                    month_data = response.json()
+                    if month_data:
+                        month_df = pd.DataFrame(month_data)
+                        st.subheader("Sales Trend by Month")
+                        st.line_chart(month_df.set_index('order_yearmonth')['total_revenue'])
+                        
+                        # Show table
+                        st.dataframe(month_df, width='stretch')
+            
+            # Revenue Distribution Histogram
+            elif chart_type == "Revenue Distribution":
+                if 'total_sales_amount' in df.columns:
+                    st.subheader("Revenue Distribution")
+                    fig, ax = plt.subplots()
+                    ax.hist(df['total_sales_amount'], bins=20, edgecolor='black')
+                    ax.set_xlabel('Revenue Amount')
+                    ax.set_ylabel('Frequency')
+                    ax.set_title('Distribution of Order Revenue')
+                    st.pyplot(fig)
+                    
+                    # Show statistics
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("Mean Revenue", f"${df['total_sales_amount'].mean():.2f}")
+                    with col2:
+                        st.metric("Median Revenue", f"${df['total_sales_amount'].median():.2f}")
+                    with col3:
+                        st.metric("Max Revenue", f"${df['total_sales_amount'].max():.2f}")
+                        
+        except Exception as e:
+            st.error(f"Error loading chart data: {str(e)}")
+    else:
+        st.warning("No transformed data available for analytics")
