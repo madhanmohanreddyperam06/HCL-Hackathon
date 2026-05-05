@@ -49,19 +49,23 @@ if feature_option == "Upload CSV File":
         help="Upload your retail sales data in CSV format"
     )
 
-    # Upload button
-    if uploaded_file is not None:
-        if st.button("Upload file"):
-            try:
-                files = {"file": uploaded_file}
-                response = requests.post(f"{BACKEND_API}/upload", files=files)
-                if response.status_code == 200:
-                    st.success("File uploaded successfully to backend!")
-                    st.session_state['data_source'] = 'CSV Upload'
+    # Get Data button
+    if st.button("Get Data"):
+        try:
+            response = requests.get(f"{BACKEND_API}/data")
+            if response.status_code == 200:
+                data = response.json()
+                if data:
+                    df = pd.DataFrame(data)
+                    st.session_state['df'] = df
+                    st.session_state['data_source'] = 'Backend Cache'
+                    st.success(f"Successfully fetched {len(df)} records")
                 else:
-                    st.error(f"Upload failed: {response.status_code}")
-            except Exception as e:
-                st.error(f"Error uploading file: {str(e)}")
+                    st.warning("No data available on backend")
+            else:
+                st.error(f"Failed to fetch data: {response.status_code}")
+        except Exception as e:
+            st.error(f"Error fetching data: {str(e)}")
 
 elif feature_option == "Fetch from External API":
     # Fetch data from external API section
@@ -94,16 +98,9 @@ elif feature_option == "Fetch from External API":
                 st.error(f"Error fetching from external API: {str(e)}")
         else:
             st.warning("Please enter an API URL")
-
-# Divider
-st.markdown("---")
-
-# Fetch data from backend
-st.subheader("Fetch Data")
-
-col1, col2 = st.columns(2)
-with col1:
-    if st.button("Get All Data"):
+    
+    # Get Data button
+    if st.button("Get Data"):
         try:
             response = requests.get(f"{BACKEND_API}/data")
             if response.status_code == 200:
@@ -120,18 +117,8 @@ with col1:
         except Exception as e:
             st.error(f"Error fetching data: {str(e)}")
 
-with col2:
-    if st.button("Clear Backend Data"):
-        try:
-            response = requests.delete(f"{BACKEND_API}/clear")
-            if response.status_code == 200:
-                st.success("Backend data cleared successfully")
-                if 'df' in st.session_state:
-                    del st.session_state['df']
-            else:
-                st.error(f"Failed to clear data: {response.status_code}")
-        except Exception as e:
-            st.error(f"Error clearing data: {str(e)}")
+# Divider
+st.markdown("---")
 
 # Display data if available
 if 'df' in st.session_state:
@@ -164,5 +151,15 @@ if 'df' in st.session_state:
         'Null Count': df.isnull().sum().values
     })
     st.dataframe(col_info, use_container_width=True)
-else:
-    st.info("👆 Upload a CSV file to fetch data to view the raw data")
+    
+    # Transform button
+    st.markdown("---")
+    if st.button("Transform"):
+        st.session_state['show_transformation'] = True
+
+# Phase 2: Transformation (hidden until Transform button is clicked)
+if st.session_state.get('show_transformation', False):
+    st.markdown("---")
+    st.markdown('<h2 class="center-header">Phase 2: TRANSFORMATION</h2>', unsafe_allow_html=True)
+    st.subheader("Data Transformation Options")
+    st.info("Transformation features will be added here.")
