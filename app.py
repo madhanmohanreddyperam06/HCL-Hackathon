@@ -31,27 +31,72 @@ st.markdown('<h1 class="center-title">Retail Sales Data ETL & Analytics Platform
 # Section 1: EXTRACTION (centered)
 st.markdown('<h2 class="center-header">Phase 1: EXTRACTION</h2>', unsafe_allow_html=True)
 
-# File upload section
-st.subheader("Upload CSV file")
-
-uploaded_file = st.file_uploader(
-    "Choose a CSV file",
-    type=['csv'],
-    help="Upload your retail sales data in CSV format"
+# Dropdown menu for feature selection
+feature_option = st.selectbox(
+    "Select Data Source",
+    ["Upload CSV File", "Fetch from External API"],
+    help="Choose how you want to load data into the system"
 )
 
-# Upload button
-if uploaded_file is not None:
-    if st.button("Upload file"):
-        try:
-            files = {"file": uploaded_file}
-            response = requests.post(f"{BACKEND_API}/upload", files=files)
-            if response.status_code == 200:
-                st.success("File uploaded successfully to backend!")
-            else:
-                st.error(f"Upload failed: {response.status_code}")
-        except Exception as e:
-            st.error(f"Error uploading file: {str(e)}")
+# Conditional display based on selection
+if feature_option == "Upload CSV File":
+    # File upload section
+    st.subheader("Upload CSV file")
+
+    uploaded_file = st.file_uploader(
+        "Choose a CSV file",
+        type=['csv'],
+        help="Upload your retail sales data in CSV format"
+    )
+
+    # Upload button
+    if uploaded_file is not None:
+        if st.button("Upload file"):
+            try:
+                files = {"file": uploaded_file}
+                response = requests.post(f"{BACKEND_API}/upload", files=files)
+                if response.status_code == 200:
+                    st.success("File uploaded successfully to backend!")
+                    st.session_state['data_source'] = 'CSV Upload'
+                else:
+                    st.error(f"Upload failed: {response.status_code}")
+            except Exception as e:
+                st.error(f"Error uploading file: {str(e)}")
+
+elif feature_option == "Fetch from External API":
+    # Fetch data from external API section
+    st.subheader("Fetch Data from External API")
+
+    api_url = st.text_input(
+        "Enter API URL",
+        placeholder="https://jsonplaceholder.typicode.com/users",
+        help="Enter the URL of the external API to fetch data from"
+    )
+
+    st.info("Allowed domains: jsonplaceholder.typicode.com, hcl-hacthon-store-one-details-1.onrender.com")
+
+    if st.button("Fetch from External API"):
+        if api_url:
+            try:
+                payload = {"url": api_url}
+                response = requests.post(f"{BACKEND_API}/fetch-external", json=payload)
+                if response.status_code == 200:
+                    result = response.json()
+                    st.success(f"Successfully fetched {result.get('count', 0)} records from external API")
+                    if 'data' in result and result['data']:
+                        df = pd.DataFrame(result['data'])
+                        st.session_state['df'] = df
+                        st.session_state['data_source'] = 'External API'
+                else:
+                    error_detail = response.json().get('detail', 'Unknown error') if response.headers.get('content-type', '').startswith('application/json') else response.text
+                    st.error(f"Failed to fetch data: {error_detail}")
+            except Exception as e:
+                st.error(f"Error fetching from external API: {str(e)}")
+        else:
+            st.warning("Please enter an API URL")
+
+# Divider
+st.markdown("---")
 
 # Fetch data from backend
 st.subheader("Fetch Data")
@@ -66,6 +111,7 @@ with col1:
                 if data:
                     df = pd.DataFrame(data)
                     st.session_state['df'] = df
+                    st.session_state['data_source'] = 'Backend Cache'
                     st.success(f"Successfully fetched {len(df)} records")
                 else:
                     st.warning("No data available on backend")
@@ -99,7 +145,8 @@ if 'df' in st.session_state:
     with col2:
         st.metric("Total Columns", len(df.columns))
     with col3:
-        st.metric("Data Source", "Backend API")
+        data_source = st.session_state.get('data_source', 'Backend Cache')
+        st.metric("Data Source", data_source)
     
     # Display the dataframe
     st.dataframe(
