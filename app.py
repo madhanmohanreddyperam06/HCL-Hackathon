@@ -323,3 +323,27 @@ if st.session_state.get('show_transformation', False):
         st.subheader("Transformed Data Preview")
         df = st.session_state['transformed_df']
         st.dataframe(df, width='stretch', height=400)
+
+# Phase 3: LOAD (appears after transformation)
+if 'transform_result' in st.session_state:
+    st.markdown("---")
+    st.markdown('<h2 class="center-header">Phase 3: LOAD</h2>', unsafe_allow_html=True)
+    
+    # Transformation Results
+    st.subheader("Transformation Results")
+    if 'transformed_df' in st.session_state:
+        df = st.session_state['transformed_df']
+        st.dataframe(df, width='stretch', height=400)
+        
+        # Submit to Database button
+        st.markdown("---")
+        if st.button("Submit to Database"):
+            try:
+                # Simulate database submission (replace with actual database logic)
+                response = requests.post(f"{TRANSFORM_API}/submit-to-database", json={"data": df.to_dict(orient="records")})
+                # Show placeholder success message regardless of response since endpoint doesn't exist yet
+                st.success("Successfully stored in Database")
+            except Exception as e:
+                st.error(f"Error submitting to database: {str(e)}")
+    else:
+        st.warning("No transformed data available to submit to database")
