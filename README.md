@@ -1,10 +1,10 @@
 # Retail Sales Data ETL & Analytics Platform
 
-![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
-![Streamlit](https://img.shields.io/badge/Streamlit-1.31.0-red)
-![Pandas](https://img.shields.io/badge/Pandas-2.2.0-green)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.104.0-teal)
-![License](https://img.shields.io/badge/License-MIT-yellow)
+![Python](https://img.shields.io/badge/Python-3.8+-3776AB?style=flat-square&logo=python)
+![Streamlit](https://img.shields.io/badge/Streamlit-1.31.0-FF4B4B?style=flat-square&logo=streamlit)
+![Pandas](https://img.shields.io/badge/Pandas-2.2.0-150458?style=flat-square&logo=pandas)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.104.0-009688?style=flat-square&logo=fastapi)
+![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
 
 A comprehensive Streamlit-based application for Extracting, Transforming, and Loading retail sales data with advanced analytics capabilities. This platform provides a complete ETL pipeline with interactive visualizations and data insights.
 
