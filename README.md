@@ -3,7 +3,6 @@
 ![Python](https://img.shields.io/badge/Python-3.8+-3776AB?style=flat-square&logo=python)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.104.0-009688?style=flat-square&logo=fastapi)
 ![Pandas](https://img.shields.io/badge/Pandas-2.2.0-150458?style=flat-square&logo=pandas)
-
 ![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
 
 A comprehensive Streamlit-based application for Extracting, Transforming, and Loading retail sales data with advanced analytics capabilities. This platform provides a complete ETL pipeline with interactive visualizations and data insights.
