@@ -455,5 +455,5 @@ Contributions are welcome! Follow these steps to submit changes:
 
 ---
 <div align="center">
-© 2026 Campus Finder. All rights reserved.
+© 2026 Data ETL. All rights reserved.
 </div>
